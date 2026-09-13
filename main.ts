@@ -11,57 +11,57 @@ import synthesisProvider from "./providers/synthesis.ts";
 import { saveStore, store } from "./store.ts";
 
 const args = parseArgs(Deno.args, {
-  string: ["host", "port", "originalUrl"],
-  default: {
-    host: "127.0.0.1",
-    port: "50132",
-    originalUrl: "http://127.0.0.1:50032",
-  },
+	string: ["host", "port", "originalUrl"],
+	default: {
+		host: "0.0.0.0",
+		port: "50132",
+		originalUrl: "http://127.0.0.1:50032",
+	},
 });
 const baseClient = ky.create({
 	baseUrl: args.originalUrl,
 });
 
 if (store.enginePath != undefined) {
-  if (await baseClient.get("").catch(() => null)) {
-    console.log("The server is already running, not starting the engine.");
-  } else if (Deno.stat(store.enginePath).catch(() => null) == undefined) {
+	if (await baseClient.get("").catch(() => null)) {
+		console.log("The server is already running, not starting the engine.");
+	} else if (Deno.stat(store.enginePath).catch(() => null) == undefined) {
 		console.log(`The engine path ${store.enginePath} does not exist, not starting the engine.`);
-    store.enginePath = undefined;
-  } else {
-    console.log(`Starting the engine at ${store.enginePath}...`);
+		store.enginePath = undefined;
+	} else {
+		console.log(`Starting the engine at ${store.enginePath}...`);
 		const process = new Deno.Command(store.enginePath, {
-        stdout: "inherit",
-        stderr: "inherit",
+			stdout: "inherit",
+			stderr: "inherit",
 		}).spawn();
-    self.addEventListener("unload", () => {
-      process.kill();
-    });
-  }
+		self.addEventListener("unload", () => {
+			process.kill();
+		});
+	}
 } else {
-  console.log("No engine path, not starting the engine.");
+	console.log("No engine path, not starting the engine.");
 }
 
 while (true) {
-  try {
-    await baseClient.get("");
-    break;
-  } catch {
-    console.log("Waiting for the server to be ready...");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
+	try {
+		await baseClient.get("");
+		break;
+	} catch {
+		console.log("Waiting for the server to be ready...");
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
 }
 
 const speakers: {
-  speakerUuid: string;
+	speakerUuid: string;
 }[] = await baseClient.get("v1/speakers").json();
 const path: {
-  speakerFolderPath: string;
+	speakerFolderPath: string;
 } = await baseClient
 	.get("v1/speaker_folder_path", {
-  searchParams: {
-    speakerUuid: speakers[0].speakerUuid,
-  },
+		searchParams: {
+			speakerUuid: speakers[0].speakerUuid,
+		},
 	})
 	.json();
 const speakerFolderPath = path.speakerFolderPath;
@@ -77,17 +77,17 @@ const app = new Hono();
 app.use("*", honoLogger());
 
 app.use("*", async (c, next) => {
-  await next();
-  c.res.headers.set("Access-Control-Allow-Origin", "*");
-  c.res.headers.set("Access-Control-Allow-Headers", "*");
-  c.res.headers.set("Access-Control-Allow-Methods", "*");
+	await next();
+	c.res.headers.set("Access-Control-Allow-Origin", "*");
+	c.res.headers.set("Access-Control-Allow-Headers", "*");
+	c.res.headers.set("Access-Control-Allow-Methods", "*");
 });
 app.options("*", (c) => {
-  return c.text("", 200);
+	return c.text("", 200);
 });
-
-[infoProvider, noopProvider, synthesisProvider, dictProvider].forEach((
-  provider,
-) => provider({ baseClient, app }));
+app.get("/", () => {
+	return proxy(`${args.originalUrl}/docs`);
+});
+[infoProvider, noopProvider, synthesisProvider, dictProvider].forEach((provider) => provider({ baseClient, app }));
 
 Deno.serve({ port: Number(args.port), hostname: args.host }, app.fetch);
