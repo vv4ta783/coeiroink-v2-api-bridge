@@ -1,8 +1,8 @@
 {
 	"tasks": {
-		"watch": "deno run --watch --allow-net --allow-run --allow-env --allow-read --allow-write main.ts",
-		"start": "deno run --allow-net --allow-run --allow-env --allow-read --allow-write main.ts",
-		"compile": "deno compile --allow-net --allow-run --allow-env --allow-read --allow-write -o coeiroink-v2-bridge main.ts"
+		"watch": "deno run --watch --allow-net --allow-run --allow-env --allow-read --allow-write --allow-sys main.ts",
+		"start": "deno run --allow-net --allow-run --allow-env --allow-read --allow-write --allow-sys main.ts",
+		"compile": "deno compile --allow-net --allow-run --allow-env --allow-read --allow-write --allow-sys -o coeiroink-v2-bridge main.ts"
 	},
 	"imports": {
 		"@hono/hono": "jsr:@hono/hono@^4.13.7",
