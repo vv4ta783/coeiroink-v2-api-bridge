@@ -1,10 +1,4 @@
-import { Hono } from "hono/mod.ts";
+import { Hono } from "@hono/hono";
 import ky from "ky";
 
-export type Provider = ({
-  baseClient,
-  app,
-}: {
-  baseClient: typeof ky;
-  app: Hono;
-}) => void;
+export type Provider = ({ baseClient, app }: { baseClient: typeof ky; app: Hono }) => void;

@@ -218,7 +218,8 @@ const synthesisProvider: Provider = ({ baseClient, app }) => {
           error: "synthesis failed",
         });
       }
-      return c.body(result.body);
+      const arrayBuffer = await result.arrayBuffer();
+      return c.body(Buffer.from(arrayBuffer));
     });
   });
 };

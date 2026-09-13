@@ -1,5 +1,4 @@
-import { dirname } from "std/path/mod.ts";
-import { fromUint8Array as toBase64 } from "base64";
+import { dirname } from "@std/path";
 import { Provider } from "./index.ts";
 
 let speakers: {
@@ -38,7 +37,7 @@ const infoProvider: Provider = ({ baseClient, app }) => {
         Deno.execPath().endsWith("deno.exe")
           ? new URL("./icon.png", import.meta.url)
           : dirname(Deno.execPath()) + "/icon.png",
-      ).then((buf) => toBase64(buf)),
+      ).then((buf) => buf.toBase64()),
       default_sampling_rate: 24000,
       terms_of_service: "https://coeiroink.com/terms を参照して下さい。",
       update_infos: [

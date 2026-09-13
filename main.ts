@@ -1,16 +1,16 @@
-import { dirname } from "std/path/mod.ts";
-import { Hono } from "hono/mod.ts";
-import { logger as honoLogger } from "hono/middleware.ts";
+import { dirname } from "@std/path";
+import { Hono } from "@hono/hono";
+import { proxy } from "@hono/hono/proxy";
+import { logger as honoLogger } from "@hono/hono/logger";
 import ky from "ky";
-import { parse } from "std/flags/mod.ts";
-import { serve } from "std/http/server.ts";
+import { parseArgs } from "@std/cli";
 import dictProvider from "./providers/dict.ts";
 import infoProvider from "./providers/info.ts";
 import noopProvider from "./providers/noop.ts";
 import synthesisProvider from "./providers/synthesis.ts";
 import { saveStore, store } from "./store.ts";
 
-const args = parse(Deno.args, {
+const args = parseArgs(Deno.args, {
   string: ["host", "port", "originalUrl"],
   default: {
     host: "127.0.0.1",
@@ -19,26 +19,21 @@ const args = parse(Deno.args, {
   },
 });
 const baseClient = ky.create({
-  prefixUrl: args.originalUrl,
+	baseUrl: args.originalUrl,
 });
 
 if (store.enginePath != undefined) {
   if (await baseClient.get("").catch(() => null)) {
     console.log("The server is already running, not starting the engine.");
   } else if (Deno.stat(store.enginePath).catch(() => null) == undefined) {
-    console.log(
-      `The engine path ${store.enginePath} does not exist, not starting the engine.`,
-    );
+		console.log(`The engine path ${store.enginePath} does not exist, not starting the engine.`);
     store.enginePath = undefined;
   } else {
     console.log(`Starting the engine at ${store.enginePath}...`);
-    const process = new Deno.Command(
-      store.enginePath,
-      {
+		const process = new Deno.Command(store.enginePath, {
         stdout: "inherit",
         stderr: "inherit",
-      },
-    ).spawn();
+		}).spawn();
     self.addEventListener("unload", () => {
       process.kill();
     });
@@ -62,11 +57,13 @@ const speakers: {
 }[] = await baseClient.get("v1/speakers").json();
 const path: {
   speakerFolderPath: string;
-} = await baseClient.get("v1/speaker_folder_path", {
+} = await baseClient
+	.get("v1/speaker_folder_path", {
   searchParams: {
     speakerUuid: speakers[0].speakerUuid,
   },
-}).json();
+	})
+	.json();
 const speakerFolderPath = path.speakerFolderPath;
 const enginePath = dirname(dirname(speakerFolderPath)) + "/engine/engine.exe";
 
@@ -93,4 +90,4 @@ app.options("*", (c) => {
   provider,
 ) => provider({ baseClient, app }));
 
-serve(app.fetch, { hostname: args.host, port: parseInt(args.port) });
+Deno.serve({ port: Number(args.port), hostname: args.host }, app.fetch);

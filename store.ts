@@ -1,5 +1,6 @@
-import osPaths from "os_paths";
-const homeDir = osPaths.home();
+import os from "node:os";
+
+const homeDir = os.homedir();
 
 type Store = {
   enginePath: string | undefined;
